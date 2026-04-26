@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soccer Scoring Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0f0f;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ====== OVERLAY ====== */
+.overlay-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    overflow: hidden;
+}
+
+.overlay-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        radial-gradient(circle at 20% 50%, rgba(233, 69, 96, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.scoreboard {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 30px 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.scoreboard:hover { transform: scale(0.92); }
+
+.team-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+}
+
+.team-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.team-logo:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.team-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.team-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.team-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 72px;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.3), 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.cards-container {
+    display: flex;
+    gap: 8px;
+    min-height: 28px;
+}
+
+.card {
+    width: 18px;
+    height: 24px;
+    border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    animation: cardAppear 0.3s ease;
+}
+
+@keyframes cardAppear {
+    from { transform: scale(0) rotate(-10deg); opacity: 0; }
+    to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.yellow-card { background: linear-gradient(135deg, #FFD700, #FFA500); }
+.red-card { background: linear-gradient(135deg, #FF4444, #CC0000); }
+
+.vs-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.vs-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 4px;
+}
+
+.timer-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: #00ff88;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.timer-display.paused {
+    color: #ffaa00;
+    text-shadow: 0 0 20px rgba(255, 170, 0, 0.4);
+    border-color: rgba(255, 170, 0, 0.2);
+}
+
+.timer-display.finished {
+    color: #ff4444;
+    text-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
+    border-color: rgba(255, 68, 68, 0.2);
+}
+
+.match-info {
+    margin-top: 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* ====== ADMIN PANEL ====== */
+.admin-panel {
+    position: fixed;
+    top: 0;
+    right: -450px;
+    width: 450px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f0f 100%);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 30px;
+}
+
+.admin-panel.open { right: 0; }
+
+.admin-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.admin-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+.admin-toggle.active {
+    background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+}
+
+.admin-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-header span { font-size: 28px; }
+
+.admin-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.form-group { margin-bottom: 15px; }
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input::placeholder { color: rgba(255, 255, 255, 0.2); }
+
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+}
+
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: -9999px;
+}
+
+.file-input-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 13px;
+}
+
+.file-input-label:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.preview-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    margin-top: 10px;
+    display: none;
+}
+
+.preview-logo.show { display: block; }
+
+.score-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.score-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.score-btn.minus {
+    background: rgba(233, 69, 96, 0.2);
+    color: #e94560;
+}
+
+.score-btn.minus:hover {
+    background: rgba(233, 69, 96, 0.4);
+    transform: scale(1.1);
+}
+
+.score-btn.plus {
+    background: rgba(0, 255, 136, 0.2);
+    color: #00ff88;
+}
+
+.score-btn.plus:hover {
+    background: rgba(0, 255, 136, 0.4);
+    transform: scale(1.1);
+}
+
+.score-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    min-width: 50px;
+    text-align: center;
+}
+
+.card-controls { display: flex; gap: 10px; }
+
+.card-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.card-btn.yellow {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+.card-btn.red {
+    background: linear-gradient(135deg, #FF4444, #CC0000);
+    color: #fff;
+}
+
+.card-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
+.card-btn:active { transform: translateY(0); }
+
+.timer-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.timer-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.timer-btn.start {
+    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    color: #000;
+}
+
+.timer-btn.pause {
+    background: linear-gradient(135deg, #ffaa00, #ff8800);
+    color: #000;
+}
+
+.timer-btn.reset {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+}
+
+.timer-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
+
+.timer-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.timer-input-group input { flex: 1; text-align: center; }
+.timer-input-group span { color: rgba(255, 255, 255, 0.5); font-weight: 600; }
+
+.divider-line {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+}
+
+.team-admin-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.team-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.team-color-dot.home { background: linear-gradient(135deg, #667eea, #764ba2); }
+.team-color-dot.away { background: linear-gradient(135deg, #e94560, #ff6b6b); }
+
+.overlay-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.overlay-hint.show { opacity: 1; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.timer-display.running { animation: pulse 1s ease infinite; }
+
+@keyframes scorePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.team-score.pop { animation: scorePop 0.4s ease; }
+
+@media (max-width: 768px) {
+    .scoreboard {
+        transform: scale(0.6);
+        padding: 20px 30px;
+    }
+    .admin-panel { width: 100%; right: -100%; }
+}
+
+.clear-cards-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.clear-cards-btn:hover {
+    background: rgba(233, 69, 96, 0.2);
+    color: #e94560;
+    border-color: rgba(233, 69, 96, 0.3);
+}
+</style>
+</head>
+<body>
+<!-- Overlay View -->
+<div class="overlay-container" id="overlayContainer">
+    <div class="scoreboard">
+        <!-- Home Team -->
+        <div class="team-section">
+            <div class="team-logo" id="homeLogoDisplay">
+                <span>&#127968;</span>
+            </div>
+            <div class="team-name" id="homeNameDisplay">HOME</div>
+            <div class="team-score" id="homeScoreDisplay">0</div>
+            <div class="cards-container" id="homeCards"></div>
+        </div>
+
+        <!-- VS & Timer -->
+        <div class="vs-divider">
+            <div class="vs-text">VS</div>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+        </div>
+
+        <!-- Away Team -->
+        <div class="team-section">
+            <div class="team-logo" id="awayLogoDisplay">
+                <span>&#9992;</span>
+            </div>
+            <div class="team-name" id="awayNameDisplay">AWAY</div>
+            <div class="team-score" id="awayScoreDisplay">0</div>
+            <div class="cards-container" id="awayCards"></div>
+        </div>
+    </div>
+    <div class="match-info" id="matchInfo">Match Time</div>
+</div>
+
+<!-- Admin Toggle -->
+<button class="admin-toggle" id="adminToggle" title="Open Admin Panel" type="button">
+    &#9881;
+</button>
+
+<!-- Admin Panel -->
+<div class="admin-panel" id="adminPanel">
+    <div class="admin-header">
+        <span>&#9881;</span>
+        Admin Control
+    </div>
+
+    <!-- Home Team -->
+    <div class="admin-section">
+        <div class="team-admin-header">
+            <div class="team-color-dot home"></div>
+            <div class="admin-section-title">Home Team</div>
+        </div>
+
+        <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" id="homeNameInput" placeholder="Enter team name" value="HOME">
+        </div>
+
+        <div class="form-group">
+            <label>Team Logo</label>
+            <div class="file-input-wrapper">
+                <input type="file" id="homeLogoInput" accept="image/*">
+                <label for="homeLogoInput" class="file-input-label">
+                    &#128247; Upload Logo
+                </label>
+            </div>
+            <img class="preview-logo" id="homeLogoPreview" alt="Preview">
+        </div>
+
+        <div class="divider-line"></div>
+
+        <div class="form-group">
+            <label>Score</label>
+            <div class="score-controls">
+                <button class="score-btn minus" onclick="updateScore('home', -1)" type="button">&#8722;</button>
+                <div class="score-value" id="homeScoreAdmin">0</div>
+                <button class="score-btn plus" onclick="updateScore('home', 1)" type="button">+</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Cards</label>
+            <div class="card-controls">
+                <button class="card-btn yellow" onclick="addCard('home', 'yellow')" type="button">Yellow</button>
+                <button class="card-btn red" onclick="addCard('home', 'red')" type="button">Red</button>
+            </div>
+            <button class="clear-cards-btn" onclick="clearCards('home')" type="button">Clear All Cards</button>
+        </div>
+    </div>
+
+    <!-- Away Team -->
+    <div class="admin-section">
+        <div class="team-admin-header">
+            <div class="team-color-dot away"></div>
+            <div class="admin-section-title">Away Team</div>
+        </div>
+
+        <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" id="awayNameInput" placeholder="Enter team name" value="AWAY">
+        </div>
+
+        <div class="form-group">
+            <label>Team Logo</label>
+            <div class="file-input-wrapper">
+                <input type="file" id="awayLogoInput" accept="image/*">
+                <label for="awayLogoInput" class="file-input-label">
+                    &#128247; Upload Logo
+                </label>
+            </div>
+            <img class="preview-logo" id="awayLogoPreview" alt="Preview">
+        </div>
+
+        <div class="divider-line"></div>
+
+        <div class="form-group">
+            <label>Score</label>
+            <div class="score-controls">
+                <button class="score-btn minus" onclick="updateScore('away', -1)" type="button">&#8722;</button>
+                <div class="score-value" id="awayScoreAdmin">0</div>
+                <button class="score-btn plus" onclick="updateScore('away', 1)" type="button">+</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Cards</label>
+            <div class="card-controls">
+                <button class="card-btn yellow" onclick="addCard('away', 'yellow')" type="button">Yellow</button>
+                <button class="card-btn red" onclick="addCard('away', 'red')" type="button">Red</button>
+            </div>
+            <button class="clear-cards-btn" onclick="clearCards('away')" type="button">Clear All Cards</button>
+        </div>
+    </div>
+
+    <!-- Timer Controls -->
+    <div class="admin-section">
+        <div class="admin-section-title">&#9201; Match Timer</div>
+
+        <div class="form-group">
+            <label>Set Time (MM : SS)</label>
+            <div class="timer-input-group">
+                <input type="number" id="timerMin" placeholder="00" min="0" max="99" value="0">
+                <span>:</span>
+                <input type="number" id="timerSec" placeholder="00" min="0" max="59" value="0">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Controls</label>
+            <div class="timer-controls">
+                <button class="timer-btn start" id="startBtn" onclick="startTimer()" type="button">Start</button>
+                <button class="timer-btn pause" id="pauseBtn" onclick="pauseTimer()" type="button">Pause</button>
+                <button class="timer-btn reset" onclick="resetTimer()" type="button">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="overlay-hint" id="overlayHint">Press F11 for fullscreen &#8226; Click gear for controls</div>
+<script>
+var state = {
+    home: { name: 'HOME', score: 0, logo: null, cards: [] },
+    away: { name: 'AWAY', score: 0, logo: null, cards: [] },
+    timer: { minutes: 0, seconds: 0, running: false, interval: null }
+};
+
+var adminToggle = document.getElementById('adminToggle');
+var adminPanel = document.getElementById('adminPanel');
+var overlayHint = document.getElementById('overlayHint');
+
+function toggleAdmin() {
+    var isOpen = adminPanel.classList.toggle('open');
+    if (isOpen) {
+        adminToggle.classList.add('active');
+        adminToggle.innerHTML = '&#10005;';
+    } else {
+        adminToggle.classList.remove('active');
+        adminToggle.innerHTML = '&#9881;';
+    }
+}
+
+adminToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleAdmin();
+});
+
+adminToggle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+});
+
+setTimeout(function() { overlayHint.classList.add('show'); }, 500);
+setTimeout(function() { overlayHint.classList.remove('show'); }, 5000);
+
+document.getElementById('homeNameInput').addEventListener('input', function(e) {
+    state.home.name = e.target.value || 'HOME';
+    document.getElementById('homeNameDisplay').textContent = state.home.name;
+});
+
+document.getElementById('awayNameInput').addEventListener('input', function(e) {
+    state.away.name = e.target.value || 'AWAY';
+    document.getElementById('awayNameDisplay').textContent = state.away.name;
+});
+
+function handleLogoUpload(team, input) {
+    var file = input.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        state[team].logo = e.target.result;
+        var display = document.getElementById(team + 'LogoDisplay');
+        var preview = document.getElementById(team + 'LogoPreview');
+
+        display.innerHTML = '<img src="' + e.target.result + '" alt="logo">';
+        preview.src = e.target.result;
+        preview.classList.add('show');
+    };
+    reader.readAsDataURL(file);
+}
+
+document.getElementById('homeLogoInput').addEventListener('change', function() {
+    handleLogoUpload('home', this);
+});
+
+document.getElementById('awayLogoInput').addEventListener('change', function() {
+    handleLogoUpload('away', this);
+});
+
+function updateScore(team, delta) {
+    state[team].score = Math.max(0, state[team].score + delta);
+    document.getElementById(team + 'ScoreDisplay').textContent = state[team].score;
+    document.getElementById(team + 'ScoreAdmin').textContent = state[team].score;
+
+    var scoreEl = document.getElementById(team + 'ScoreDisplay');
+    scoreEl.classList.remove('pop');
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add('pop');
+}
+
+function addCard(team, type) {
+    state[team].cards.push(type);
+    renderCards(team);
+}
+
+function clearCards(team) {
+    state[team].cards = [];
+    renderCards(team);
+}
+
+function renderCards(team) {
+    var container = document.getElementById(team + 'Cards');
+    var html = '';
+    for (var i = 0; i < state[team].cards.length; i++) {
+        html += '<div class="card ' + state[team].cards[i] + '-card"></div>';
+    }
+    container.innerHTML = html;
+}
+
+function formatTime(m, s) {
+    var min = m < 10 ? '0' + m : m;
+    var sec = s < 10 ? '0' + s : s;
+    return min + ':' + sec;
+}
+
+function updateTimerDisplay() {
+    document.getElementById('timerDisplay').textContent = formatTime(state.timer.minutes, state.timer.seconds);
+}
+
+function startTimer() {
+    if (state.timer.running) return;
+    state.timer.running = true;
+    document.getElementById('timerDisplay').classList.add('running');
+    document.getElementById('timerDisplay').classList.remove('paused', 'finished');
+
+    state.timer.interval = setInterval(function() {
+        state.timer.seconds++;
+        if (state.timer.seconds >= 60) {
+            state.timer.seconds = 0;
+            state.timer.minutes++;
+        }
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function pauseTimer() {
+    state.timer.running = false;
+    clearInterval(state.timer.interval);
+    document.getElementById('timerDisplay').classList.remove('running');
+    document.getElementById('timerDisplay').classList.add('paused');
+}
+
+function resetTimer() {
+    pauseTimer();
+    var min = parseInt(document.getElementById('timerMin').value) || 0;
+    var sec = parseInt(document.getElementById('timerSec').value) || 0;
+    state.timer.minutes = min;
+    state.timer.seconds = sec;
+    updateTimerDisplay();
+    document.getElementById('timerDisplay').classList.remove('paused', 'finished');
+}
+
+document.getElementById('timerMin').addEventListener('input', resetTimer);
+document.getElementById('timerSec').addEventListener('input', resetTimer);
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        adminPanel.classList.remove('open');
+        adminToggle.classList.remove('active');
+        adminToggle.innerHTML = '&#9881;';
+    }
+    if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        state.timer.running ? pauseTimer() : startTimer();
+    }
+});
+
+updateTimerDisplay();
+</script>
+</body>
+</html>
