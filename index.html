@@ -2,28 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My First Styled Page</title>
-    <!-- Link to external CSS file -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calypso Strike FC | Official Site</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Website</h1>
-        <nav>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Contact</a></li>
-            </ul>
-        </nav>
+
+    <nav class="navbar">
+        <div class="logo">CALYPSO<span>STRIKE</span></div>
+        <ul class="nav-links">
+            <li><a href="#">Matches</a></li>
+            <li><a href="#">Squad</a></li>
+            <li><a href="#">News</a></li>
+            <li><a href="#" class="btn-ticket">Tickets</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <span class="eyebrow">Next Match: Saturday 19:00</span>
+            <h1>BE THE TIDE</h1>
+            <p>Experience the rhythm of the game at the Calypso Arena.</p>
+            <div class="hero-btns">
+                <a href="#" class="btn-primary">View Roster</a>
+                <a href="#" class="btn-secondary">Match Center</a>
+            </div>
+        </div>
     </header>
 
-    <main>
-        <div class="card">
-            <h2>About This Sample</h2>
-            <p>This is a simple card styled using <strong>CSS</strong> properties like padding, margins, and borders.</p>
-            <button class="btn">Click Me!</button>
+    <section class="container">
+        <h2 class="section-title">Latest Result</h2>
+        <div class="match-card">
+            <div class="team">
+                <img src="logo-placeholder.png" alt="CSFC">
+                <span>CSFC</span>
+            </div>
+            <div class="score">3 - 1</div>
+            <div class="team">
+                <span>CITY FC</span>
+                <img src="away-logo.png" alt="City">
+            </div>
         </div>
-    </main>
+    </section>
+
 </body>
 </html>
