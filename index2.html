@@ -47,7 +47,7 @@
 
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
+            font-weight: 500;
             line-height: 1.2;
             text-wrap: balance;
         }
@@ -1190,7 +1190,10 @@
                 </div>
             </div>
             <div class="hero-logo">
-                <img src="logo.jpeg" alt="CD Tranque Vergara" class="roundrect" onerror="this.style.display='none'">
+                <video autoplay loop muted playsinline width="640" height="360"> 
+                    <source src="tranquevergara.mov" type="video/mp4">  
+                </video>
+                
             </div>
         </div>
         <div></div>
@@ -1546,7 +1549,7 @@
                     </div>
                 </div>
                 <div class="contact-form fade-in">
-                    <form onsubmit="event.preventDefault(); showNotification('¡Mensaje enviado! Te contactaremos pronto.');">
+                    <form onsubmit="sendToWhatsApp(event)">
                         <div class="form-group">
                             <label for="name">Nombre Completo</label>
                             <input type="text" id="name" placeholder="Tu nombre" required>
@@ -1727,6 +1730,32 @@
                 }
             });
         });
+
+        function sendToWhatsApp(event) {
+        // Prevent the default form submission (page refresh)
+        event.preventDefault();
+
+        // 1. Enter your WhatsApp number in international format (Do not use "+" or "00")
+        const phoneNumber = "+56929879393"; // Example: "15551234567"
+
+        // 2. Get form values
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const message = document.getElementById('message').value;
+
+        // 3. Format the text block (Use %0a for line breaks)
+        const textMessage = `Hola, Me gustaría contactarme con ustedes!%0A%0A` +
+                            `Nombre: ${name}%0A` +
+                            `Correo: ${email}%0A` +
+                            `Mensaje: ${message}`;
+
+        // 4. Construct the complete URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${textMessage}`;
+
+        // 5. Open WhatsApp in a new browser tab
+        window.open(whatsappUrl, '_blank').focus();
+        }
     </script>
+    
 </body>
 </html>
